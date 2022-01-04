@@ -10,7 +10,7 @@ class Numeral(Enum):
 	DOUBLES = 2
 	TRIPLES = 3
 
-class Hand:
+class Trick:
 	def __init__(self, numeral, initial):
 		self.numeral = numeral
 		self.cards = []
@@ -22,19 +22,42 @@ class Simulator:
 
 	def __init__(self, options = {}):
 		self.deck = Deck()
-		num_players = 6
+		self.num_players = 6
 		hands = []
-		for i in range(num_players):
+		for i in range(self.num_players):
 			hands.append([])
 		random.shuffle(self.deck.cards)
 		for i in range(52):
 			hands[i % 6].append(self.deck.cards[i])
 		self.players = []
-		for i in range(num_players):
+		for i in range(self.num_players):
 			self.players.append(Player(hands[i]))
-		# for i in range(num_players):
-		# 	if self.players[i].can_start():
-		# 		self.first_player_idx = i
+		self.curent_player_idx = 0
+		self.current_trick = Trick(Numeral.SINGLES, [Card(Rank.THREE, Suit.CLUBS)])
+		self.tricks = []
+		self.play_trick()
+
+
+	def play_trick(self):
+		last_play = 0
+		while True:
+			cards = self.players[self.curent_player_idx % self.num_players].play()
+			if not cards is None:
+				if cards[0].rank == Rank.TWO:
+					break
+				last_play = 0
+				if self.current_trick.numeral == Numeral.SINGLES:
+					if cards[0].rank == self.current_trick.cards[-1].rank:
+						self.curent_player_idx += 1
+				self.current_trick.cards += cards
+			else:
+				last_play += 1
+				if last_play == self.num_players - 1:
+					break
+			self.curent_player_idx += 1
+		self.tricks.append(self.current_trick)
+		
+
 		
 
 class Player:
@@ -57,10 +80,6 @@ class Player:
 		else:
 			return False
 
-	def remove_cards(self, cards_to_remove):
-		for card in cards_to_remove:
-			self.han
-
 
 
 	def play(self):
@@ -72,7 +91,7 @@ class Player:
 			if Player.play_re.match(play_as_text):
 				card_indices = play_as_text.split(",")
 				break
-			elif play == "":
+			elif play_as_text == "":
 				return None
 			else:
 				print("Play invalid, please enter a comma-separated list of cards, no spaces")
@@ -81,7 +100,6 @@ class Player:
 			card = sorted_hand[int(card_indices[idx]) - 1]
 			cards_to_play.append(card)
 			self.index[card.rank].remove(card)
-		self.print_hand()
 		return cards_to_play
 
 
@@ -107,7 +125,7 @@ class Player:
 				elif amt == 3:
 					triples.append(card)
 				elif amt == 4:
-					quads.appen(card)
+					quads.append(card)
 		sorted_singles = sorted(singles, key=cmp_to_key(Card.card_compartor))
 		sorted_doubles = sorted(doubles, key=cmp_to_key(Card.card_compartor))
 		sorted_triples = sorted(triples, key=cmp_to_key(Card.card_compartor))

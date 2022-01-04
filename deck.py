@@ -5,6 +5,7 @@ from colorama import init, Fore, Back, Style
 init()
 
 class Rank(Enum):
+	ACE		= 0
 	TWO		= 2
 	THREE	= 3
 	FOUR	= 4
@@ -17,26 +18,33 @@ class Rank(Enum):
 	JACK	= 11
 	QUEEN	= 12
 	KING	= 13
-	ACE		= 14
-	JOKER	= 15
+	JOKER	= 14
 
 	def __str__(self):
-		if (self.value <= 10):
-			return str(self.value)
+		if self == Rank.ACE:
+			return "A"
 		elif self == Rank.JACK:
 			return "J"
 		elif self == Rank.QUEEN:
 			return "Q"
 		elif self == Rank.KING:
 			return "K"
-		elif self == Rank.ACE:
-			return "A"
-		else:
+		elif self == Rank.JOKER:
 			return "W"
+		else:
+			return str(self.value)
 
 
 	def __repr__(self):
 		return self.__str__()
+
+	def rank_sort_order(self):
+		if self == Rank.ACE:
+			return Rank.KING.value + .3
+		elif self == Rank.TWO:
+			return Rank.KING.value + .6
+		else:
+			return self.value
 
 
 class Color(Enum):
@@ -50,11 +58,10 @@ class Color(Enum):
 
 
 class Suit(Enum):
-	CLUBS			= 1
+	SPADES		= 0
+	HEARTS		= 1
 	DIAMONDS	= 2
-	HEARTS		= 3
-	SPADES		= 4
- 
+	CLUBS			= 3 
 
 	def getColor(self):
 		if self.value % 2 == 0:
@@ -90,13 +97,34 @@ class Card():
 
 
 	def __str__(self):
-		if self.suit is None:
-			return "%s_%s%s" % (self.color.getCode(), str(self.rank), Style.RESET_ALL)
-		return "%s%s%s%s" % (self.color.getCode(), str(self.suit), str(self.rank), Style.RESET_ALL)
+		if True:
+			if self.suit is None:
+				return "%s_%s%s" % (self.color.getCode(), str(self.rank), Style.RESET_ALL)
+			return "%s%s%s%s" % (self.color.getCode(), str(self.suit), str(self.rank), Style.RESET_ALL)
+		else:
+			if self.rank == Rank.JOKER:
+				unicode_char = "\U0001f0df"
+			else:
+				base_card = ord("\U0001f0a0")
+				rank_offset = self.rank.value
+				suit_offset = self.suit.value * 16
+				unicode_char = chr(base_card + rank_offset + suit_offset)
+			return "%s%s%s" % (self.color.getCode(), unicode_char, Style.RESET_ALL)
 
 
 	def __repr__(self):
 		return self.__str__()
+
+
+	def card_compartor(card1, card2):
+		c1SortValue = card1.rank.rank_sort_order()
+		c2SortValue = card2.rank.rank_sort_order()
+		if c1SortValue != c2SortValue:
+			return c1SortValue - c2SortValue
+		elif card1.suit is None:
+			return card1.color.value - card2.color.value
+		else:
+			return card1.suit.value - card2.suit.value
 
 
 class Deck():

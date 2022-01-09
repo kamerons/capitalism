@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from enum import Enum
 from functools import cmp_to_key
 import random
@@ -33,14 +35,22 @@ class Simulator:
 		for i in range(self.num_players):
 			self.players.append(Player(hands[i]))
 		self.curent_player_idx = 0
-		self.current_trick = Trick(Numeral.SINGLES, [Card(Rank.THREE, Suit.CLUBS)])
+		for player in self.players:
+			if player.can_start():
+				break
+			self.curent_player_idx += 1
+		
+		print("Current player: %d" % ((self.curent_player_idx % self.num_players) + 1))
+		self.current_trick = self.players[self.curent_player_idx].begin_trick()
 		self.tricks = []
+		self.curent_player_idx += 1
 		self.play_trick()
 
 
 	def play_trick(self):
 		last_play = 0
 		while True:
+			print("Current player: %d" % ((self.curent_player_idx % self.num_players) + 1))
 			cards = self.players[self.curent_player_idx % self.num_players].play()
 			if not cards is None:
 				if cards[0].rank == Rank.TWO:
@@ -48,6 +58,7 @@ class Simulator:
 				last_play = 0
 				if self.current_trick.numeral == Numeral.SINGLES:
 					if cards[0].rank == self.current_trick.cards[-1].rank:
+						print("Skipping the next player")
 						self.curent_player_idx += 1
 				self.current_trick.cards += cards
 			else:
@@ -102,13 +113,23 @@ class Player:
 			self.index[card.rank].remove(card)
 		return cards_to_play
 
-
-	def start(self):
-		pass
+	def can_start(self):
+		if Rank.THREE in self.index:
+			for three in self.index[Rank.THREE]:
+				if three.suit == Suit.CLUBS:
+					return True
+		return False
 
 
 	def begin_trick(self):
-		return (Numeral.SINGLES, self.cards[1])
+		cards = self.play()
+		if len(cards) == 1:
+			return Trick(Numeral.SINGLES, cards)
+		elif len(cards) == 2:
+			return Trick(Numeral.DOUBLES, cards)
+		elif len(cards) == 3:
+			return Trick(Numeral.TRIPLES, cards)
+
 
 	def get_sorted_hand(self):
 		singles = []
@@ -138,3 +159,6 @@ class Player:
 		sorted_hand = self.get_sorted_hand()
 		for i in range(len(sorted_hand)):
 			print("%d: %s" % (i + 1, sorted_hand[i]))
+
+if __name__ == "__main__":
+	simulator = Simulator()
